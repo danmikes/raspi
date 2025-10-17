@@ -1,4 +1,4 @@
-name: Deploy to Raspi (No Docker)
+name: Deploy to Raspi
 
 on:
   push:
@@ -32,49 +32,41 @@ jobs:
         host: ${{ secrets.PI_HOST }}
         username: ${{ secrets.PI_USER }}
         key: ${{ secrets.PI_KEY }}
+        envs: PACK
         script: |
+          set -e
           cd ~/app
           
-          if ! command -v python3 &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y python3 python3-pip python3-venv
-          fi
-
-          if [ ! -d "venv" ]; then
-            python3 -m venv venv
-          fi
-          
+          echo "Create virtual environment ..."
+          python3 -m venv venv --system-site-packages          
           source venv/bin/activate
-          pip install --upgrade pip
 
-          if [ ! -f .last_requirements ] || ! cmp -s pack.txt .last_requirements; then
-            pip install -r pack.txt
-            cp pack.txt .last_requirements
+          pip install --upgrade pip
+          # pip install -r pack.txt # raspi global install
+
+          python -c "import numpy, scipy, matplotlib; print('✓ Scientific packages loaded')"
+          python -c "import flask, gunicorn; print('✓ Web packages loaded')"
+
+          echo "Set systemd service..."
+          if [ -f "conf/flask-app.service" ]; then
+            sed "s/\${USER}/${{ secrets.PI_USER }}/g" conf/flask-app.service | sudo tee /etc/systemd/system/flask-app.service > /dev/null
+            sudo systemctl daemon-reload
+          else
+            echo "Warning: conf/flask-app.service not found"
+            exit 1
           fi
 
-          sudo tee /etc/systemd/system/flask-app.service > /dev/null << EOF
-          [Unit]
-          Description=Flask App
-          After=network.target
-
-          [Service]
-          Type=simple
-          User=${{ secrets.PI_USER }}
-          WorkingDirectory=/home/${{ secrets.PI_USER }}/app
-          Environment=PATH=/home/${{ secrets.PI_USER }}/app/venv/bin
-          ExecStart=/home/${{ secrets.PI_USER }}/app/venv/bin/gunicorn --bind 0.0.0.0:5001 --workers 1 --timeout 120 app:app
-          Restart=always
-          RestartSec=5
-
-          [Install]
-          WantedBy=multi-user.target
-          EOF
-          
-          sudo systemctl daemon-reload
+          echo "Restart service ..."
           sudo systemctl enable flask-app.service
           sudo systemctl restart flask-app.service
-          
-          echo "Service status:"
-          sudo systemctl status flask-app.service
+
+          echo "Service status:"          
+          sudo systemctl status flask-app.service --no-pager
+
+          echo "Verify application ..."
+          sleep 5
+          curl -f --connect-timeout 10 --max-time 30 http://localhost:5001/ || echo "Application not running (yet)"
+
+          echo "✅ Deploy complete"
         timeout: 15m
         command_timeout: 25m

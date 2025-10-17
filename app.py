@@ -7,19 +7,14 @@ import matplotlib.pyplot as plt
 app = Flask(__name__)
 
 params = [
-  {'name': 'T1', 'label': 'T1', 'type': 'number', 'value': ss._T1, 'size': '11', 'color': 'yellow'},
-  {'name': 'T2', 'label': 'T2', 'type': 'number', 'value': ss._T2, 'size': '11', 'color': 'yellow'},
-  {'name': 'T3', 'label': 'T3', 'type': 'number', 'value': ss._T3, 'size': '11', 'color': 'yellow'},
-  {'name': 'A1', 'label': 'A1', 'type': 'number', 'value': ss._A1, 'size': '6', 'color': 'cyan'},
-  {'name': 'A2', 'label': 'A2', 'type': 'number', 'value': ss._A2, 'size': '6', 'color': 'cyan'},
-  {'name': 'A3', 'label': 'A3', 'type': 'number', 'value': ss._A3, 'size': '6', 'color': 'cyan'},
-  {'name': 'Tm1', 'label': 'Tm1', 'type': 'number', 'value': ss._Tm1, 'size': '10', 'color': 'magenta'},
-  {'name': 'Tm2', 'label': 'Tm2', 'type': 'number', 'value': ss._Tm2, 'size': '10', 'color': 'magenta'},
-  {'name': 'Tm3', 'label': 'Tm3', 'type': 'number', 'value': ss._Tm3, 'size': '10', 'color': 'magenta'},
-  {'name': 'Am1', 'label': 'Am1', 'type': 'number', 'value': ss._Am1, 'size': '6', 'color': 'lime'},
-  {'name': 'Am2', 'label': 'Am2', 'type': 'number', 'value': ss._Am2, 'size': '6', 'color': 'lime'},
-  {'name': 'Am3', 'label': 'Am3', 'type': 'number', 'value': ss._Am3, 'size': '6', 'color': 'lime'},
-  {'name': 'sam', 'label': 'Samples', 'type': 'number', 'value': ss.SAM, 'size': '8', 'color': 'white'},
+  [{'name': name, 'label': name, 'type': 'number', 'value': val, 'size': size, 'color': color}
+  for name, val, size in params_list]
+  for color, params_list in [
+    ('red', [('T1', ss._T1, 11), ('A1', ss._A1, 6), ('Tm1', ss._Tm1, 10), ('Am1', ss._Am1, 6)]),
+    ('green', [('T2', ss._T2, 11), ('A2', ss._A2, 6), ('Tm2', ss._Tm2, 10), ('Am2', ss._Am2, 6)]),
+    ('yellow', [('T3', ss._T3, 11), ('A3', ss._A3, 6), ('Tm3', ss._Tm3, 10), ('Am3', ss._Am3, 6)]),
+    ('white', [('sam', ss.SAM, 8)])
+  ]
 ]
 
 runs = [
@@ -30,11 +25,13 @@ runs = [
   {'action': 'run_params', 'label': 'Parameters', 'color': 'lime'},
 ]
 
+flat_params = [param for group in params for param in group]
+
 @app.route('/')
 def index():
   return render_template('index.htm',
     build=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-    params=params,
+    params=flat_params,  # Use flat_params instead of grouped
     runs=runs)
 
 @app.route('/update_params', methods=['POST'])
@@ -126,51 +123,6 @@ def run_animation():
     return send_file(buf, mimetype='image/png')
   except Exception as e:
     return jsonify({'error': str(e)}), 500
-
-### TEST TOP ###
-@app.route('/period-analysis')
-def period_analysis():
-  try:
-    sams, fits = ss.run_params(ss._T_)
-    params, _ = ss.logistic(sams, fits)
-    return jsonify({
-      'sams': sams.tolist(),
-      'fits': fits.tolist(),
-      'logistic_params': [float(p) for p in params]
-    })
-  except Exception as e:
-    return jsonify({'error': str(e)}), 500
-
-@app.route('/amplitude-analysis')
-def amplitude_analysis():
-  try:
-    sams, fits = ss.run_params(ss._A_)
-    params, _ = ss.logistic(sams, fits)
-    return jsonify({
-      'sams': sams.tolist(),
-      'fits': fits.tolist(),
-      'logistic_params': [float(p) for p in params]
-    })
-  except Exception as e:
-    return jsonify({'error': str(e)}), 500
-
-@app.route('/test-samsim')
-def test_samsim():
-  """Test if samsim functions work without plotting"""
-  try:
-    params = ss.get_current_params()
-    pars = ss.fullX(**params)
-    result = ss.run_ins(*pars)
-    
-    return jsonify({
-      'status': 'success',
-      'parameters': params,
-      'run_ins_result_length': len(result)
-    })
-  except Exception as e:
-    import traceback
-    return jsonify({'error': str(e)}), 500
-### TEST END ###
 
 @app.route('/health')
 def health_check():

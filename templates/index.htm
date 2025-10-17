@@ -16,10 +16,9 @@
       
       <div class="params" id="params-container">
         {% for param in params %}
-        <label>
-          {{ param.label }}
-          <input type="{{ param.type }}"
-            value="{{ param.value }}"
+        <label data-param-color="{{ param.color }}">
+          {{ param.name }}
+          <input type="number" value="{{ param.value }}"
             data-param-name="{{ param.name }}"
             style="--param-color: {{ param.color }}; --param-size: {{ param.size }}ch;">
         </label>
