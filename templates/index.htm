@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="build" content="{{ build }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>SamSim</title>
+</head>
+<body data-theme="dark">
+  <div class="container">
+    <header>
+      <h1 class="title">SamSim</h1>
+      
+      <div class="params" id="params-container">
+        {% for param in params %}
+        <label>
+          {{ param.label }}
+          <input type="{{ param.type }}"
+            value="{{ param.value }}"
+            data-param-name="{{ param.name }}"
+            style="--param-color: {{ param.color }}; --param-size: {{ param.size }}ch;">
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="runs" id="runs-container">
+        {% for run in runs %}
+        <button type="button"
+          class="btn-standard"
+          data-action="{{ run.action }}"
+          style="--btn-color: {{ run.color }}">
+          {{ run.label }}
+        </button>
+        {% endfor %}
+      </div>
+    </header>
+
+    <main>
+      <section class="graph">
+        <div class="loader" id="loader">
+          <div class="spinner"></div>
+          <p>Loading plot ...</p>
+        </div>
+        <div class="graph-content">
+          <!-- plots will appear here -->
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Ready</p>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+numpy
+ipython
+flask
+gunicorn
