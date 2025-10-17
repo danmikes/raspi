@@ -62,7 +62,7 @@ jobs:
           User=${{ secrets.PI_USER }}
           WorkingDirectory=/home/${{ secrets.PI_USER }}/app
           Environment=PATH=/home/${{ secrets.PI_USER }}/app/venv/bin
-          ExecStart=/home/${{ secrets.PI_USER }}/app/venv/bin/gunicorn --bind 0.0.0.0:5000 --workers 1 --timeout 120 app:app
+          ExecStart=/home/${{ secrets.PI_USER }}/app/venv/bin/gunicorn --bind 0.0.0.0:5001 --workers 1 --timeout 120 app:app
           Restart=always
           RestartSec=5
 
