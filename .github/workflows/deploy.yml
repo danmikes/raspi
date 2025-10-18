@@ -37,13 +37,6 @@ jobs:
           set -e
           cd ~/app
           
-          echo "Create virtual environment ..."
-          python3 -m venv venv --system-site-packages          
-          source venv/bin/activate
-
-          pip install --upgrade pip
-          # pip install -r pack.txt # raspi global install
-
           python -c "import numpy, scipy, matplotlib; print('✓ Scientific packages loaded')"
           python -c "import flask, gunicorn; print('✓ Web packages loaded')"
 
