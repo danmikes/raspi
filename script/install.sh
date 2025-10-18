@@ -1,1 +1,2 @@
-sudo pip uninstall numpy scipy matplotlib pillow ipython flask gunicorn -y && pip install numpy==1.21.6 scipy==1.7.3 pillow==9.5.0 matplotlib==3.5.3 ipython==8.17.2 flask==2.3.3 gunicorn==21.2.0
+sudo apt install -y python3-numpy python3-scipy python3-pil python3-matplotlib
+sudo pip install flask gunicorn

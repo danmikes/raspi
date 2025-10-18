@@ -19,7 +19,7 @@ jobs:
         host: ${{ secrets.PI_HOST }}
         username: ${{ secrets.PI_USER }}
         key: ${{ secrets.PI_KEY }}
-        source: "."
+        source: ".,!__pycache__,!.git,!.github,!.venv,!.vscode,!.deployignore,!.gitignore,!README.md,!.DS_Store"
         target: "~/app"
         strip_components: 1
         port: 22
@@ -37,8 +37,7 @@ jobs:
           set -e
           cd ~/app
           
-          python -c "import numpy, scipy, matplotlib; print('✓ Scientific packages loaded')"
-          python -c "import flask, gunicorn; print('✓ Web packages loaded')"
+          python -c "import numpy, scipy, matplotlib, flask, gunicorn, PIL; print('✓ All packages work')"
 
           echo "Set systemd service..."
           if [ -f "conf/flask-app.service" ]; then
