@@ -1,0 +1,58 @@
+networks:
+  traefik-net:
+    driver: bridge
+
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    networks:
+      - traefik-net
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=traefik-net
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.myresolver.acme.email=max8@post.cz
+      - --certificatesresolvers.myresolver.acme.storage=/certificates/acme.json
+      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.myresolver.acme.httpchallenge=true
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certificates:/certificates
+
+  trial:
+    image: ghcr.io/danmikes/trial:latest
+    container_name: trial
+    platform: linux/arm/v6
+    pull_policy: always
+    networks:
+      - traefik-net
+    restart: always
+    deploy:
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.flask.rule=Host(`dmikes.duckdns.org`)
+      - traefik.http.routers.flask.entrypoints=websecure
+      - traefik.http.routers.flask.tls=true
+      - traefik.http.routers.flask.tls.certresolver=myresolver
+      - traefik.http.routers.flask-http.rule=Host(`dmikes.duckdns.org`)
+      - traefik.http.routers.flask-http.entrypoints=web
+      - traefik.http.routers.flask-http.middlewares=redirect-to-https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.services.flask.loadbalancer.server.port=5000
